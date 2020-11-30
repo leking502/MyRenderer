@@ -11,23 +11,34 @@ const int width = 800;
 const int height = 800;
 
 void DrawLine(int x0, int x1, int y0, int y1, TGAImage& image, TGAColor color);
+void DrawTriangle(Vector2i* vertex, TGAImage& image, TGAColor color);
+Vector3f Barycentric(Vector2i* vertex, Vector2i& p);
+Vector3f cross(const Vector3f& v0, const Vector3f& v1);
 int main(int argc, char** argv) {
-	TGAImage image(1000, 1000, TGAImage::RGB);
+	TGAImage image(width, height, TGAImage::RGB);
 	Model* model = new Model("obj/african_head.obj");
+	
 	for (int i = 0; i < model->nfaces(); i++)
 	{
-		std::vector<int> face = model->face(i);
+		vector<int> face = model->face(i);
+		Vector2i vertex[3];
+		Vector3f vec3f[3];
 		for (int j = 0; j < 3; j++)
 		{
-			Vector3f v0 = model->vert(face[j]);
-			Vector3f v1 = model->vert(face[(j + 1) % 3]);
-			int x0 = (v0.x + 1.) * width / 2.;
-			int y0 = (v0.y + 1.) * height / 2.;
-			int x1 = (v1.x + 1.) * width / 2.;
-			int y1 = (v1.y + 1.) * height / 2.;
-			DrawLine(x0, y0, x1, y1, image, white);
+			Vector3f v = model->vert(face[j]);
+			vertex[j] = Vector2i(
+				(v.x + 1) * width / 2, 
+				(v.y + 1) * height / 2);
+			vec3f[j] = v;
 		}
-	}
+		Vector3f vec = cross(vec3f[1] - vec3f[0], vec3f[2] - vec3f[0]);
+		vec.normalize();
+		float n =  vec * Vector3f(0,0,1);
+		if (n > 0)
+		{
+			DrawTriangle(vertex, image, TGAColor(255 * n, 255 * n, 255 * n, 255 * n));
+		}			
+	}	
 	image.flipVertically(); // i want to have the origin at the left bottom corner of the image
 	image.writeTgaFile("output.tga");
 	return 0;
@@ -70,5 +81,40 @@ void DrawLine(int x0, int y0, int x1, int y1, TGAImage& image, TGAColor color)
 }
 void DrawTriangle(Vector2i* vertex, TGAImage& image, TGAColor color)
 {
-	
+	Vector2i limitBoxMax =  Vector2i(0, 0);
+	Vector2i limitBoxMin =  Vector2i(image.getWidth() - 1, image.getHeight() - 1);
+	Vector2i clamp =  Vector2i(image.getWidth() - 1, image.getHeight() - 1);
+	for (int i = 0; i < 3; i++)
+	{
+		for (int j = 0; j < 2; j++)
+		{
+			limitBoxMax[j] = min(clamp[j], max(limitBoxMax[j], vertex[i][j]));
+			limitBoxMin[j] = max(0, min(limitBoxMin[j], vertex[i][j]));
+		}
+	}
+	Vector2i p;
+	for (p.x= limitBoxMin.x; p.x < limitBoxMax.x; p.x++)
+	{
+		for (p.y = limitBoxMin.y; p.y < limitBoxMax.y; p.y++)
+		{
+			Vector3f v = Barycentric(vertex, p);
+			if (v.x < 0 || v.y < 0 || v.z < 0)
+				continue;
+			//cout << v.x << "|" << v.y << "|" << v.z << endl;
+			image.set(p.x, p.y, color);
+		}
+	}
+}
+Vector3f cross(const Vector3f& v0, const Vector3f& v1)
+{
+	return Vector3f(v0.y * v1.z - v1.y * v0.z, v0.z * v1.x- v0.x * v1.z, v0.x * v1.y - v0.y * v1.x);
+}
+Vector3f Barycentric(Vector2i* vertex, Vector2i& p)
+{
+	Vector3f vec = cross(
+		Vector3f(vertex[1].x - vertex[0].x, vertex[2].x - vertex[0].x, vertex[0].x - p.x),
+		Vector3f(vertex[1].y - vertex[0].y, vertex[2].y - vertex[0].y, vertex[0].y - p.y));
+	if (abs(vec.z) < 1)
+		return Vector3f(-1,1,1);
+	return Vector3f(1.f-(vec.x+vec.y)/vec.z,vec.y/vec.z,vec.x/vec.z);
 }

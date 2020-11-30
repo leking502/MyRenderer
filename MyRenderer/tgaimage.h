@@ -87,8 +87,8 @@ public:
 	bool set(int x, int y, const TGAColor& c);
 	~TGAImage();
 	TGAImage& operator =(const TGAImage& img);
-	int get_width();
-	int get_height();
+	int getWidth();
+	int getHeight();
 	int get_bytespp();
 	unsigned char* buffer();
 	void clear();
