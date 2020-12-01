@@ -23,20 +23,31 @@ Model::Model(const char* filename) : verts_(), faces_()
             for (int i = 0; i < 3; i++) iss >> v[i];
             verts_.push_back(v);
         }
+        else if (!line.compare(0, 3, "vt "))
+        {
+            iss >> trash>>trash;
+            Vector3f v;
+            for (int i = 0; i < 2; i++) iss >> v[i];
+            texVerts_.push_back(v);
+        }
         else if (!line.compare(0, 2, "f "))
         {
             std::vector<int> f;
-            int itrash, idx;
+            std::vector<int> t;
+            int itrash, idx,itex;
             iss >> trash;
-            while (iss >> idx >> trash >> itrash >> trash >> itrash)
+            while (iss >> idx >> trash >> itex >> trash >> itrash)
             {
-                idx--; // in wavefront obj all indices start at 1, not zero
+                idx--;
+                itex--;// in wavefront obj all indices start at 1, not zero
                 f.push_back(idx);
+                t.push_back(itex);
             }
+            texture_.push_back(t);
             faces_.push_back(f);
         }
     }
-    std::cerr << "# v# " << verts_.size() << " f# " << faces_.size() << std::endl;
+    std::cerr << "# v# " << verts_.size() << " f# " << faces_.size() << "vt#"<<texture_.size()<<std::endl;
 }
 
 Model::~Model()
@@ -57,8 +68,16 @@ std::vector<int> Model::face(int idx)
 {
     return faces_[idx];
 }
+std::vector<int> Model::texture(int idx)
+{
+    return texture_[idx];
+}
 
 Vector3f Model::vert(int i)
 {
     return verts_[i];
+}
+Vector3f Model::texVert(int i)
+{
+    return texVerts_[i];
 }
