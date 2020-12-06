@@ -17,7 +17,10 @@ void DrawTriangle(Vector3f* vertex, float* zBuffer,TGAImage& image, TGAColor col
 void DrawTriangle(Vector3f* vertex, float* zBuffer, TGAImage& image, TGAImage& texture, Vector3f* posTexture, float light);
 Vector3f Barycentric(Vector3f* vertex, Vector3f& p);
 Vector3f cross(const Vector3f& v0, const Vector3f& v1);
+
+
 int main(int argc, char** argv) {
+
 	TGAImage image(width, height, TGAImage::RGB);
 	TGAImage texture;
 	texture.read_tga_file("african_head_diffuse.tga");
@@ -31,9 +34,22 @@ int main(int argc, char** argv) {
 		Vector3f vec3f[3];
 		Vector3f texPos[3];
 
+		float c = 2.0f;
+
 		for (int j = 0; j < 3; j++)
 		{
 			Vector3f v = model->vert(face[j]);
+
+			float x = v.x;
+			float y = v.y;
+			float z = v.z;
+
+			float i = 1 - (v.z / c);
+
+			v.x = v.x / i;
+			v.y = v.y / i;
+			v.z = v.z / i;
+
 			Vector3f tV = model->texVert(tex[j]);
 			vertex[j] = Vector3f(
 				int((v.x + 1.0) * width / 2.0 + 0.5), 
