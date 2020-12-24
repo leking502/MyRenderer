@@ -18,6 +18,25 @@ void DrawTriangle(Vector3f* vertex, float* zBuffer, TGAImage& image, TGAImage& t
 Vector3f Barycentric(Vector3f* vertex, Vector3f& p);
 Vector3f cross(const Vector3f& v0, const Vector3f& v1);
 
+Vector2f rotate (Vector2f* vec, float angle)
+{
+	float x;
+	float y;
+	x = vec->x;
+	y = vec->y;
+	vec->x = (x * cos(angle)) - (y * sin(angle));
+	vec->y = (x * sin(angle)) + (y * cos(angle));
+	return Vector2f(vec->x, vec->y);
+}
+void rotate(Vector3f* v, float permanent,float vertical)
+{
+	Vector2f vec0 = rotate(new Vector2f(v->x, v->z), atan(1) * 2 * (permanent / 90));
+	v->x = vec0.x;
+	v->z = vec0.y;
+	Vector2f vec1 = rotate(new Vector2f(v->y, v->z), atan(1) * 2 * (vertical / 90));
+	v->y = vec1.x;
+	v->z = vec1.y;
+}
 
 int main(int argc, char** argv) {
 
@@ -34,16 +53,17 @@ int main(int argc, char** argv) {
 		Vector3f vec3f[3];
 		Vector3f texPos[3];
 
-		float c = 2.0f;
+		float c = 3.0f;
 
 		for (int j = 0; j < 3; j++)
 		{
 			Vector3f v = model->vert(face[j]);
 
-			float x = v.x;
-			float y = v.y;
-			float z = v.z;
-
+			float x = 45;
+			float y = -90;
+			
+			rotate(&v, x, y);
+			
 			float i = 1 - (v.z / c);
 
 			v.x = v.x / i;
@@ -73,6 +93,7 @@ int main(int argc, char** argv) {
 	image.writeTgaFile("output.tga");
 	return 0;
 }
+
 void DrawLine(int x0, int y0, int x1, int y1, TGAImage& image, TGAColor color)
 {
 	bool steep = false;
@@ -109,6 +130,7 @@ void DrawLine(int x0, int y0, int x1, int y1, TGAImage& image, TGAColor color)
 		}
 	}
 }
+
 void DrawTriangle(Vector3f* vertex, float* zBuffer,TGAImage& image, TGAColor color)
 {
 	Vector2i limitBoxMax =  Vector2i(0, 0);
@@ -143,6 +165,7 @@ void DrawTriangle(Vector3f* vertex, float* zBuffer,TGAImage& image, TGAColor col
 		}
 	}
 }
+
 void DrawTriangle(Vector3f* vertex, float* zBuffer, TGAImage& image, TGAImage& texture,Vector3f* posTexture,float light)
 {
 	Vector2i limitBoxMax = Vector2i(0, 0);
@@ -185,10 +208,12 @@ void DrawTriangle(Vector3f* vertex, float* zBuffer, TGAImage& image, TGAImage& t
 		}
 	}
 }
+
 Vector3f cross(const Vector3f& v0, const Vector3f& v1)
 {
 	return Vector3f(v0.y * v1.z - v1.y * v0.z, v0.z * v1.x- v0.x * v1.z, v0.x * v1.y - v0.y * v1.x);
 }
+
 Vector3f Barycentric(Vector3f* vertex, Vector3f& p)
 {
 	Vector3f vec = cross(
